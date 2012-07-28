@@ -25,13 +25,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public class Parse {
-  private ReqHeaders rh = null;
   private URIBuilder builder = null;
+  private String applicationID;
+  private String restAPIKey;
   
   public Parse(
       String applicationID,
       String restAPIKey) {
-    this.rh = new ReqHeaders(applicationID, restAPIKey);
+    this.applicationID = applicationID;
+    this.restAPIKey = restAPIKey;
+    
     this.builder = new URIBuilder();
     builder.setScheme("https")
     .setHost("api.parse.com");
@@ -78,8 +81,8 @@ public class Parse {
     try {
       HttpGet hget = new HttpGet(uri);
       
-      hget.setHeader("X-Parse-Application-Id", rh.getApplicationID());
-      hget.setHeader("X-Parse-REST-API-Key", rh.getRestAPIKey());
+      hget.setHeader("X-Parse-Application-Id", applicationID);
+      hget.setHeader("X-Parse-REST-API-Key", restAPIKey);
       hget.setHeader("Accept-Charset","UTF-8");
       
       HttpResponse response = client.execute(hget);
