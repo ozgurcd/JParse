@@ -14,6 +14,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.mushrappa.parse.exceptions.JParseException;
 
 public class Parse {
   private ReqHeaders rh = null;
@@ -33,8 +34,10 @@ public class Parse {
     builder.addParameter("where", query);
     String result = null;
     try {
-      result = doGet(rh, builder.build());
+      result = doGet(builder.build());
     } catch (URISyntaxException e) {
+      e.printStackTrace();
+    } catch (JParseException e) {
       e.printStackTrace();
     }
     return result;
@@ -45,14 +48,17 @@ public class Parse {
     
     String result = null;
     try {
-      result = doGet(rh, builder.build());
+      result = doGet(builder.build());
     } catch (URISyntaxException e) {
+      e.printStackTrace();
+    } catch (JParseException e) {
       e.printStackTrace();
     }
     return result;
   }
   
-  private String doGet(ReqHeaders rh, URI uri) {
+  private String doGet(URI uri)
+      throws JParseException {
     HttpClient client = new DefaultHttpClient();
     BufferedReader in = null;
     StringBuilder sb = new StringBuilder();
