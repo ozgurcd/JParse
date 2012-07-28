@@ -3,8 +3,10 @@ package org.mushrappa.parse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -15,6 +17,12 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.mushrappa.parse.exceptions.JParseException;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Parse {
   private ReqHeaders rh = null;
@@ -29,10 +37,14 @@ public class Parse {
     .setHost("api.parse.com");
   }
   
-  public String query(String className, String query) {
+  public ArrayList<Object> query(
+      String className,
+      String query,
+      Type type) throws JParseException {
+    
     builder.setPath("/1/classes/" + className);
     builder.addParameter("where", query);
-    String result = null;
+    JsonObject result = null;
     try {
       result = doGet(builder.build());
     } catch (URISyntaxException e) {
@@ -40,24 +52,23 @@ public class Parse {
     } catch (JParseException e) {
       e.printStackTrace();
     }
-    return result;
-  }
-  
-  public String getByObjectId(String className, String id) {
-    builder.setPath("/1/classes/" + className + "/" + id);
     
-    String result = null;
-    try {
-      result = doGet(builder.build());
-    } catch (URISyntaxException e) {
-      e.printStackTrace();
-    } catch (JParseException e) {
-      e.printStackTrace();
+    ArrayList<Object> or = new ArrayList<Object>();
+    
+    if (result.get("results").isJsonArray()) {
+      JsonArray array = result.get("results").getAsJsonArray();
+      Gson gson = new Gson();
+      for (JsonElement jel : array) {
+        or.add(gson.fromJson(jel, type));
+      }
+    } else {
+      throw new JParseException();
     }
-    return result;
+    
+    return or;
   }
   
-  private String doGet(URI uri)
+  private JsonObject doGet(URI uri)
       throws JParseException {
     HttpClient client = new DefaultHttpClient();
     BufferedReader in = null;
@@ -91,7 +102,6 @@ public class Parse {
       client.getConnectionManager().shutdown();
     }
     
-    return sb.toString();
+    return new JsonParser().parse(sb.toString()).getAsJsonObject();
   }
-  
 }
