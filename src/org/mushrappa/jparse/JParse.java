@@ -31,6 +31,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -110,6 +111,31 @@ public class JParse {
     return success;
   }
   
+  
+  public <T> boolean update(
+      String id,
+      JsonObject changes,
+      Class<T> classofT) throws JParseException {
+    builder.setPath("/1/classes/"
+        + classofT.getSimpleName() + "/" + id);
+    
+    boolean success = false;
+    
+    JsonObject result = null;
+    try {
+      result = doPut(builder.build(), changes);
+    } catch (URISyntaxException e) {
+      throw new JParseException(e);
+    }
+    
+    JsonElement element = result.get("code");
+    if (element == null) {
+      success = true;
+    }
+    
+    return success;
+  }
+  
   public String store(Object pojo) throws JParseException {
     builder.setPath("/1/classes/" + pojo.getClass().getSimpleName());
     
@@ -159,7 +185,7 @@ public class JParse {
     return new JsonParser().parse(sb.toString()).getAsJsonObject();
   }
   
-  public JsonObject doPost(URI uri, Object pojo) throws JParseException {
+  private JsonObject doPost(URI uri, Object pojo) throws JParseException {
     HttpClient client = new DefaultHttpClient();
     BufferedReader in = null;
     StringBuilder sb = new StringBuilder();
@@ -196,7 +222,7 @@ public class JParse {
     return new JsonParser().parse(sb.toString()).getAsJsonObject();
   }
   
-  public JsonObject doDelete(URI uri) throws JParseException {
+  private JsonObject doDelete(URI uri) throws JParseException {
     HttpClient client = new DefaultHttpClient();
     BufferedReader in = null;
     StringBuilder sb = new StringBuilder();
@@ -210,6 +236,43 @@ public class JParse {
       hdel.setHeader("Accept-Charset","UTF-8");
       
       HttpResponse response = client.execute(hdel);
+      HttpEntity resEnt = response.getEntity();
+      if (resEnt != null) {
+        in = new BufferedReader(new InputStreamReader(resEnt.getContent()));
+        while ((line = in.readLine()) != null) {
+          sb.append(line);
+        }
+      }
+    } catch (UnsupportedEncodingException e) {
+      throw new JParseException(e);
+    } catch (ClientProtocolException e) {
+      throw new JParseException(e);
+    } catch (IOException e) {
+      throw new JParseException(e);
+    }
+    
+    return new JsonParser().parse(sb.toString()).getAsJsonObject();
+  }
+  
+  private JsonObject doPut(
+      URI uri,
+      JsonObject changes) throws JParseException {
+    HttpClient client = new DefaultHttpClient();
+    BufferedReader in = null;
+    StringBuilder sb = new StringBuilder();
+    String line = null;
+    
+    try {
+      HttpPut hput = new HttpPut(uri);
+      hput.setHeader("X-Parse-Application-Id", applicationID);
+      hput.setHeader("X-Parse-REST-API-Key", restAPIKey);
+      hput.setHeader("Content-Type", "application/json");
+      hput.setHeader("Accept-Charset","UTF-8");
+      
+      HttpEntity reqEnt = new StringEntity(changes.toString());
+      hput.setEntity(reqEnt);
+      
+      HttpResponse response = client.execute(hput);
       HttpEntity resEnt = response.getEntity();
       if (resEnt != null) {
         in = new BufferedReader(new InputStreamReader(resEnt.getContent()));
