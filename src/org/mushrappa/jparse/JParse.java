@@ -19,7 +19,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -58,27 +57,26 @@ public class JParse {
     .setHost("api.parse.com");
   }
   
-  public ArrayList<Object> query(
-      String className,
+  public <T> ArrayList<T> query(
       String query,
-      Type type) throws JParseException {
+      Class<T> classofT) throws JParseException {
     
-    builder.setPath("/1/classes/" + className);
+    builder.setPath("/1/classes/" + classofT.getSimpleName());
     builder.addParameter("where", query);
     JsonObject result = null;
+    
     try {
       result = doGet(builder.build());
     } catch (URISyntaxException e) {
       throw new JParseException(e);
     }
     
-    ArrayList<Object> or = new ArrayList<Object>();
-    
+    ArrayList<T> or = new ArrayList<T>();
     if (result.get("results").isJsonArray()) {
       JsonArray array = result.get("results").getAsJsonArray();
       Gson gson = new Gson();
       for (JsonElement jel : array) {
-        or.add(gson.fromJson(jel, type));
+        or.add(gson.fromJson(jel, classofT));
       }
     } else {
       throw new JParseException();
@@ -87,10 +85,8 @@ public class JParse {
     return or;
   }
   
-  public String store(
-      String className,
-      Object pojo) throws JParseException {
-    builder.setPath("/1/classes/" + className);
+  public String store(Object pojo) throws JParseException {
+    builder.setPath("/1/classes/" + pojo.getClass().getSimpleName());
     
     JsonObject result = null;
     try {
