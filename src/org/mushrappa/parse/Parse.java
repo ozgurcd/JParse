@@ -3,6 +3,7 @@ package org.mushrappa.parse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,7 +15,9 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.mushrappa.parse.exceptions.JParseException;
 
@@ -51,9 +54,7 @@ public class Parse {
     try {
       result = doGet(builder.build());
     } catch (URISyntaxException e) {
-      e.printStackTrace();
-    } catch (JParseException e) {
-      e.printStackTrace();
+      throw new JParseException(e);
     }
     
     ArrayList<Object> or = new ArrayList<Object>();
@@ -71,8 +72,22 @@ public class Parse {
     return or;
   }
   
-  private JsonObject doGet(URI uri)
-      throws JParseException {
+  public String store(
+      String className,
+      Object pojo) throws JParseException {
+    builder.setPath("/1/classes/" + className);
+    
+    JsonObject result = null;
+    try {
+      result = doPost(builder.build(), pojo);
+    } catch (URISyntaxException e) {
+      throw new JParseException(e);
+    }
+    
+    return result.get("objectId").toString();
+  }
+  
+  private JsonObject doGet(URI uri) throws JParseException {
     HttpClient client = new DefaultHttpClient();
     BufferedReader in = null;
     StringBuilder sb = new StringBuilder();
@@ -98,11 +113,48 @@ public class Parse {
         }
       }
     } catch (ClientProtocolException e) {
-      e.printStackTrace();
+      throw new JParseException(e);
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new JParseException(e);
     } finally {
       client.getConnectionManager().shutdown();
+    }
+    
+    return new JsonParser().parse(sb.toString()).getAsJsonObject();
+  }
+  
+  public JsonObject doPost(URI uri, Object pojo) throws JParseException {
+    HttpClient client = new DefaultHttpClient();
+    BufferedReader in = null;
+    StringBuilder sb = new StringBuilder();
+    String line = null;
+    Gson gson = new Gson();
+    
+    try {
+      HttpPost hpost = new HttpPost(uri);
+      hpost.setHeader("X-Parse-Application-Id", applicationID);
+      hpost.setHeader("X-Parse-REST-API-Key", restAPIKey);
+      hpost.setHeader("Content-Type", "application/json");
+      hpost.setHeader("Accept-Charset","UTF-8");
+      
+      HttpEntity reqEnt = new StringEntity(gson.toJson(pojo));
+      hpost.setEntity(reqEnt);
+      
+      
+      HttpResponse response = client.execute(hpost);
+      HttpEntity resEnt = response.getEntity();
+      if (resEnt != null) {
+        in = new BufferedReader(new InputStreamReader(resEnt.getContent()));
+        while ((line = in.readLine()) != null) {
+          sb.append(line);
+        }
+      }
+    } catch (UnsupportedEncodingException e) {
+      throw new JParseException(e);
+    } catch (ClientProtocolException e) {
+      throw new JParseException(e);
+    } catch (IOException e) {
+      throw new JParseException(e);
     }
     
     return new JsonParser().parse(sb.toString()).getAsJsonObject();
