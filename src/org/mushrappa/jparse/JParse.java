@@ -28,6 +28,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
@@ -83,6 +84,30 @@ public class JParse {
     }
     
     return or;
+  }
+  
+  public <T> boolean delete(
+      String id,
+      Class<T> classofT) throws JParseException {
+    
+    builder.setPath("/1/classes/" + 
+        classofT.getSimpleName() + "/" + id);
+    
+    boolean success = false;
+    JsonObject result = null;
+    try {
+      result = doDelete(builder.build());
+    } catch (JParseException e) {
+      throw new JParseException(e);
+    } catch (URISyntaxException e) {
+      throw new JParseException(e);
+    }
+    
+    JsonElement element = result.get("code");
+    if (element == null) {
+      success = true;
+    }
+    return success;
   }
   
   public String store(Object pojo) throws JParseException {
@@ -153,6 +178,38 @@ public class JParse {
       
       
       HttpResponse response = client.execute(hpost);
+      HttpEntity resEnt = response.getEntity();
+      if (resEnt != null) {
+        in = new BufferedReader(new InputStreamReader(resEnt.getContent()));
+        while ((line = in.readLine()) != null) {
+          sb.append(line);
+        }
+      }
+    } catch (UnsupportedEncodingException e) {
+      throw new JParseException(e);
+    } catch (ClientProtocolException e) {
+      throw new JParseException(e);
+    } catch (IOException e) {
+      throw new JParseException(e);
+    }
+    
+    return new JsonParser().parse(sb.toString()).getAsJsonObject();
+  }
+  
+  public JsonObject doDelete(URI uri) throws JParseException {
+    HttpClient client = new DefaultHttpClient();
+    BufferedReader in = null;
+    StringBuilder sb = new StringBuilder();
+    String line = null;
+    
+    try {
+      HttpDelete hdel = new HttpDelete(uri);
+      hdel.setHeader("X-Parse-Application-Id", applicationID);
+      hdel.setHeader("X-Parse-REST-API-Key", restAPIKey);
+      hdel.setHeader("Content-Type", "application/json");
+      hdel.setHeader("Accept-Charset","UTF-8");
+      
+      HttpResponse response = client.execute(hdel);
       HttpEntity resEnt = response.getEntity();
       if (resEnt != null) {
         in = new BufferedReader(new InputStreamReader(resEnt.getContent()));
