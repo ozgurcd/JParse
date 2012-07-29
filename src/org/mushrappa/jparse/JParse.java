@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  */
 
-package org.mushrappa.parse;
+package org.mushrappa.jparse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,7 +34,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.mushrappa.parse.exceptions.JParseException;
+import org.mushrappa.jparse.exceptions.JParseException;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -42,12 +42,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class Parse {
+public class JParse {
   private URIBuilder builder = null;
   private String applicationID;
   private String restAPIKey;
   
-  public Parse(
+  public JParse(
       String applicationID,
       String restAPIKey) {
     this.applicationID = applicationID;

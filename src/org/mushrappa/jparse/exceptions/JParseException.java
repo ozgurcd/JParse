@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  */
 
-package org.mushrappa.parse.exceptions;
+package org.mushrappa.jparse.exceptions;
 
 public class JParseException extends Exception {
   private static final long serialVersionUID = 7845198089116025901L;
