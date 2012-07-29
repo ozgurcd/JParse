@@ -22,10 +22,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -48,18 +48,19 @@ public class JParse {
   private String applicationID;
   private String restAPIKey;
   
+  public JParse() { }
   public JParse(
       String applicationID,
       String restAPIKey) {
     this.applicationID = applicationID;
     this.restAPIKey = restAPIKey;
     
-    this.builder = new URIBuilder();
+    builder = new URIBuilder();
     builder.setScheme("https")
     .setHost("api.parse.com");
   }
   
-  public <T> ArrayList<T> query(
+  public <T> List<T> query(
       String query,
       Class<T> classofT) throws JParseException {
     
@@ -73,7 +74,7 @@ public class JParse {
       throw new JParseException(e);
     }
     
-    ArrayList<T> or = new ArrayList<T>();
+    List<T> or = new ArrayList<T>();
     if (result.get("results").isJsonArray()) {
       JsonArray array = result.get("results").getAsJsonArray();
       Gson gson = new Gson();
@@ -105,7 +106,7 @@ public class JParse {
     }
     
     JsonElement element = result.get("code");
-    if (element == null) {
+    if (null == element) {
       success = true;
     }
     return success;
@@ -129,7 +130,7 @@ public class JParse {
     }
     
     JsonElement element = result.get("code");
-    if (element == null) {
+    if (null == element) {
       success = true;
     }
     
@@ -163,16 +164,17 @@ public class JParse {
       hget.setHeader("Accept-Charset","UTF-8");
       
       HttpResponse response = client.execute(hget);
-      StatusLine status = response.getStatusLine();
-      System.out.println("Status code: " + status.getStatusCode());
-      System.out.println("Status Mesg: " + status.getReasonPhrase());
+//      StatusLine status = response.getStatusLine();
+//      System.out.println("Status code: " + status.getStatusCode());
+//      System.out.println("Status Mesg: " + status.getReasonPhrase());
       
       HttpEntity entity = response.getEntity();
-      if (entity != null) {
+      if (null != entity) {
         in = new BufferedReader(new InputStreamReader(entity.getContent()));
-        while ((line = in.readLine()) != null) {
+        while (null != (line = in.readLine())) {
           sb.append(line);
         }
+        in.close();
       }
     } catch (ClientProtocolException e) {
       throw new JParseException(e);
@@ -205,11 +207,12 @@ public class JParse {
       
       HttpResponse response = client.execute(hpost);
       HttpEntity resEnt = response.getEntity();
-      if (resEnt != null) {
+      if (null != resEnt) {
         in = new BufferedReader(new InputStreamReader(resEnt.getContent()));
-        while ((line = in.readLine()) != null) {
+        while (null != (line = in.readLine())) {
           sb.append(line);
         }
+        in.close();
       }
     } catch (UnsupportedEncodingException e) {
       throw new JParseException(e);
@@ -237,11 +240,12 @@ public class JParse {
       
       HttpResponse response = client.execute(hdel);
       HttpEntity resEnt = response.getEntity();
-      if (resEnt != null) {
+      if (null != resEnt) {
         in = new BufferedReader(new InputStreamReader(resEnt.getContent()));
-        while ((line = in.readLine()) != null) {
+        while (null != (line = in.readLine())) {
           sb.append(line);
         }
+        in.close();
       }
     } catch (UnsupportedEncodingException e) {
       throw new JParseException(e);
@@ -274,11 +278,12 @@ public class JParse {
       
       HttpResponse response = client.execute(hput);
       HttpEntity resEnt = response.getEntity();
-      if (resEnt != null) {
+      if (null != resEnt) {
         in = new BufferedReader(new InputStreamReader(resEnt.getContent()));
-        while ((line = in.readLine()) != null) {
+        while (null != (line = in.readLine())) {
           sb.append(line);
         }
+        in.close();
       }
     } catch (UnsupportedEncodingException e) {
       throw new JParseException(e);
