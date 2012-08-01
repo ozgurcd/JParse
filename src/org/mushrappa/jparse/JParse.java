@@ -47,6 +47,7 @@ public class JParse {
   private URIBuilder builder = null;
   private String applicationID;
   private String restAPIKey;
+  private String apiVersion = "1";
   
   public JParse() { }
   public JParse(
@@ -60,11 +61,23 @@ public class JParse {
     .setHost("api.parse.com");
   }
   
+  public void setVersion(String version) {
+    this.apiVersion = version;
+  }
+  
+  public String getVersion() {
+    return apiVersion;
+  }
+  
   public <T> List<T> query(
       String query,
       Class<T> classofT) throws JParseException {
     
-    builder.setPath("/1/classes/" + classofT.getSimpleName());
+    builder.setPath(String.format(
+        "/%s/classes/%s",
+        apiVersion,
+        classofT.getSimpleName()));
+    
     builder.addParameter("where", query);
     JsonObject result = null;
     
@@ -92,8 +105,11 @@ public class JParse {
       String id,
       Class<T> classofT) throws JParseException {
     
-    builder.setPath("/1/classes/" + 
-        classofT.getSimpleName() + "/" + id);
+    builder.setPath(String.format(
+        "/%s/classes/%s/%s",
+        apiVersion,
+        classofT.getSimpleName(),
+        id));
     
     boolean success = false;
     JsonObject result = null;
@@ -117,11 +133,14 @@ public class JParse {
       String id,
       JsonObject changes,
       Class<T> classofT) throws JParseException {
-    builder.setPath("/1/classes/"
-        + classofT.getSimpleName() + "/" + id);
+    
+    builder.setPath(String.format(
+        "/%s/classes/%s/%s",
+        apiVersion,
+        classofT.getSimpleName(),
+        id));
     
     boolean success = false;
-    
     JsonObject result = null;
     try {
       result = doPut(builder.build(), changes);
@@ -138,13 +157,25 @@ public class JParse {
   }
   
   public String store(Object pojo) throws JParseException {
-    builder.setPath("/1/classes/" + pojo.getClass().getSimpleName());
+    
+    builder.setPath(String.format(
+        "/%s/classes/%s",
+        apiVersion,
+        pojo.getClass().getSimpleName()));
     
     JsonObject result = null;
     try {
       result = doPost(builder.build(), pojo);
     } catch (URISyntaxException e) {
       throw new JParseException(e);
+    }
+    
+    if (null == result) {
+      throw new JParseException("NULL result from parse.com");
+    }
+    
+    if (null == result.get("objectId")) {
+      throw new JParseException("ObjectID not found in result from parse.com");
     }
     
     return result.get("objectId").toString();
@@ -161,7 +192,7 @@ public class JParse {
       
       hget.setHeader("X-Parse-Application-Id", applicationID);
       hget.setHeader("X-Parse-REST-API-Key", restAPIKey);
-      hget.setHeader("Accept-Charset","UTF-8");
+      //hget.setHeader("Accept-Charset","UTF-8");
       
       HttpResponse response = client.execute(hget);
 //      StatusLine status = response.getStatusLine();
@@ -199,7 +230,7 @@ public class JParse {
       hpost.setHeader("X-Parse-Application-Id", applicationID);
       hpost.setHeader("X-Parse-REST-API-Key", restAPIKey);
       hpost.setHeader("Content-Type", "application/json");
-      hpost.setHeader("Accept-Charset","UTF-8");
+      //hpost.setHeader("Accept-Charset","UTF-8");
       
       HttpEntity reqEnt = new StringEntity(gson.toJson(pojo));
       hpost.setEntity(reqEnt);
@@ -236,7 +267,7 @@ public class JParse {
       hdel.setHeader("X-Parse-Application-Id", applicationID);
       hdel.setHeader("X-Parse-REST-API-Key", restAPIKey);
       hdel.setHeader("Content-Type", "application/json");
-      hdel.setHeader("Accept-Charset","UTF-8");
+      //hdel.setHeader("Accept-Charset","UTF-8");
       
       HttpResponse response = client.execute(hdel);
       HttpEntity resEnt = response.getEntity();
@@ -271,7 +302,7 @@ public class JParse {
       hput.setHeader("X-Parse-Application-Id", applicationID);
       hput.setHeader("X-Parse-REST-API-Key", restAPIKey);
       hput.setHeader("Content-Type", "application/json");
-      hput.setHeader("Accept-Charset","UTF-8");
+      //hput.setHeader("Accept-Charset","UTF-8");
       
       HttpEntity reqEnt = new StringEntity(changes.toString());
       hput.setEntity(reqEnt);
